@@ -9,7 +9,7 @@
   const dateFilter = document.getElementById('dateFilter');
   const tableHeader = document.querySelector('.grid thead tr');
   const style = document.createElement('style');
-  style.textContent = '.grid th{white-space:nowrap}.editable{width:100%;min-width:116px;padding:9px 10px;background:#101b27;border:1px solid #304355;border-radius:6px;color:#edf4f8}.editable::placeholder{color:#8fa2b3}.cartridge-edit{min-width:94px}.observation-edit{min-width:140px}';
+  style.textContent = '.grid th{white-space:nowrap}.editable{width:100%;min-width:116px;padding:9px 10px;background:#101b27;border:1px solid #304355;border-radius:6px;color:#edf4f8}.editable::placeholder{color:#8fa2b3}.cartridge-edit{min-width:94px}.observation-edit{min-width:140px}.status{font-weight:600}.status.green{color:#24c586}.status.yellow{color:#f2b84b}.status.red{color:#ef6670}.util-cell{min-width:92px}.util-value{display:block;margin-bottom:5px}.util-meter{height:6px;background:#263746;border-radius:6px;overflow:hidden}.util-meter i{display:block;height:100%;border-radius:6px}.util-meter.green i{background:#24c586}.util-meter.yellow i{background:#f2b84b}.util-meter.red i{background:#ef6670}.row-actions{display:flex;gap:5px}.row-actions .btn{padding:7px 9px}.row-editing{outline:1px solid #2fa9e6;outline-offset:-1px}';
   document.head.append(style);
   const formatNumber = value => Number(value || 0).toLocaleString('es-CO', { maximumFractionDigits: 1 });
   const dateInputValue = date => {
@@ -85,12 +85,12 @@
         '<td><input class="editable cartridge-edit cartridge2-edit" data-af="' + item.af + '" type="number" min="0" max="125" step="0.1" value="' + Number(item.cartridge2).toFixed(1) + '"></td>' +
         '<td><input class="editable observation-edit observations-edit" data-af="' + item.af + '" value="' + (item.observations || '') + '" placeholder="Añadir observación"></td>' +
         '<td><input class="editable grease-edit" data-af="' + item.af + '" type="number" min="0" max="250" step="0.1" value="' + calculation.grease.toFixed(1) + '"> ml</td>' +
-        '<td>' + formatNumber(calculation.percent) + '%</td>' +
+        '<td><div class="util-cell"><span class="util-value">' + formatNumber(calculation.percent) + '%</span><div class="util-meter ' + currentStatus + '"><i style="width:' + Math.min(100, calculation.percent) + '%"></i></div></div></td>' +
         '<td><span class="status ' + currentStatus + '"><i class="dot"></i>' + statusLabel[currentStatus] + '</span></td>' +
         '<td>' + calculation.daysRemaining + '</td>' +
         '<td>' + dateText(calculation.changeDate) + '</td>' +
         '<td><input class="editable point-edit" data-af="' + item.af + '" value="' + (item.point || 'Doble punto') + '"></td>' +
-        '<td><button class="btn" data-remove="' + item.af + '">Eliminar</button></td>' +
+        '<td><div class="row-actions"><button class="btn" data-edit="' + item.af + '">Modificar</button><button class="btn" data-remove="' + item.af + '">Eliminar</button></div></td>' +
         '</tr>';
     }).join('');
     const totalGrease = calculations.reduce((sum, entry) => sum + entry.calculation.grease, 0);
@@ -156,6 +156,14 @@
     }
   });
   rows.addEventListener('click', event => {
+    const editButton = event.target.closest('[data-edit]');
+    if (editButton) {
+      const row = editButton.closest('tr');
+      row.classList.add('row-editing');
+      row.querySelector('.date-edit')?.focus();
+      toast();
+      return;
+    }
     const button = event.target.closest('[data-remove]');
     if (!button) return;
     data = data.filter(item => item.af !== button.dataset.remove);
