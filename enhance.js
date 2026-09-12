@@ -37,7 +37,8 @@
   const syncItem = item => {
     item.grease = Number(currentGrease(item).toFixed(2));
     const remaining = Math.max(0, capacityPerEquipment - item.grease);
-    if (!Number.isFinite(Number(item.cartridge1)) || !Number.isFinite(Number(item.cartridge2))) {
+    const hasCartridgeValues = item.cartridge1 !== '' && item.cartridge2 !== '' && Number.isFinite(Number(item.cartridge1)) && Number.isFinite(Number(item.cartridge2));
+    if (!hasCartridgeValues) {
       item.cartridge1 = Number(Math.min(cartridgeCapacity, remaining / 2).toFixed(1));
       item.cartridge2 = Number(Math.min(cartridgeCapacity, remaining / 2).toFixed(1));
     }
