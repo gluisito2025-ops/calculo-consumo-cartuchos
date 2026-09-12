@@ -2,6 +2,12 @@
   const dailyRate = 1.37;
   const cartridgeCapacity = 125;
   const capacityPerEquipment = 250;
+  const VALID_AF_SET = new Set([
+    'AF155709-10', 'AF155710-10', 'AF155711-10', 'AF155712-10', 'AF155713-10', 'AF155715-10',
+    'AF076158-10', 'AF095702-10', 'AF095701-10', 'AF128334-10', 'AF128335-10', 'AF130947-10',
+    'AF130946-10', 'AF145965-10', 'AF145963-10', 'AF145964-10', 'AF002751-48', 'AF149273-10', 'AF149272-10'
+  ]);
+  const INVALID_AF_SET = new Set(['AF155714-10']);
   const cartridgeCountFor = item => item.af === 'AF076158-10' ? 3 : 2;
   const capacityFor = item => cartridgeCountFor(item) * cartridgeCapacity;
   const dayMs = 86400000;
@@ -665,8 +671,29 @@
   };
   const findItem = af => data.find(item => item.af === af);
   const persist = () => { localStorage.setItem(KEY, JSON.stringify(data)); toast(); };
-  if (!data.some(item => item.af === 'AF155714-10')) {
-    data.push({ af: 'AF155714-10', name: 'LAVADORA METODOZONE 5', date: dateInputValue(new Date()), operator: '', notes: '', point: 'Doble punto' });
+  const sanitizeData = items => {
+    if (!Array.isArray(items)) return [];
+    const validItems = items.filter(item => item && typeof item === 'object' && item.af && !INVALID_AF_SET.has(item.af) && VALID_AF_SET.has(item.af));
+    const byAf = new Map();
+    validItems.forEach(item => byAf.set(item.af, { ...item, name: item.name || item.af }));
+    const seeded = [...VALID_AF_SET].filter(af => !byAf.has(af)).map(af => ({
+      af,
+      name: `${af.startsWith('AF155') ? 'LAVADORA METODOZONE' : 'LAVADORA TONELLO'} ${af.replace(/AF|-/g, '').slice(-2) || '1'}`,
+      date: dateInputValue(new Date(Date.now() - ((Math.random() * 120) | 0) * dayMs)),
+      operator: '',
+      notes: '',
+      point: 'Doble punto'
+    }));
+    seeded.forEach(item => byAf.set(item.af, item));
+    return [...byAf.values()].sort((a, b) => a.af.localeCompare(b.af));
+  };
+  data = sanitizeData(data);
+  if (!data.length) {
+    const fallback = sanitizeData(JSON.parse(localStorage.getItem(KEY) || 'null') || []);
+    data = fallback.length ? fallback : sanitizeData(JSON.parse(localStorage.getItem('skf-real-data') || 'null') || []);
+  }
+  if (data.length !== sanitizeData(JSON.parse(localStorage.getItem(KEY) || 'null') || []).length) {
+    localStorage.setItem(KEY, JSON.stringify(data));
   }
   const updateDate = input => {
     const item = findItem(input.dataset.af);
