@@ -734,7 +734,7 @@
   });
   [search, state, dateFilter].forEach(control => control?.addEventListener('input', render));
   const tableWrap = document.querySelector('.table-wrap');
-  if (tableWrap) tableWrap.style.maxHeight = '460px';
+  if (tableWrap) tableWrap.style.maxHeight = '380px';
   const addButton = document.getElementById('add');
   const modal = document.createElement('div');
   modal.className = 'equipment-modal';
