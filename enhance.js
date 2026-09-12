@@ -9,7 +9,7 @@
   const dateFilter = document.getElementById('dateFilter');
   const tableHeader = document.querySelector('.grid thead tr');
   const style = document.createElement('style');
-  style.textContent = '.grid th{white-space:nowrap}.editable{width:100%;min-width:116px;padding:9px 10px;background:#101b27;border:1px solid #304355;border-radius:6px;color:#edf4f8}.editable::placeholder{color:#8fa2b3}.cartridge-edit{min-width:94px}.observation-edit{min-width:140px}.status{font-weight:600}.status.green{color:#24c586}.status.yellow{color:#f2b84b}.status.red{color:#ef6670}.util-cell{min-width:92px}.util-value{display:block;margin-bottom:5px}.util-meter{height:6px;background:#263746;border-radius:6px;overflow:hidden}.util-meter i{display:block;height:100%;border-radius:6px}.util-meter.green i{background:#24c586}.util-meter.yellow i{background:#f2b84b}.util-meter.red i{background:#ef6670}.row-actions{display:flex;gap:5px}.row-actions .btn{padding:7px 9px}.row-editing{outline:1px solid #2fa9e6;outline-offset:-1px}';
+  style.textContent = '.grid th{white-space:nowrap}.editable{width:100%;min-width:116px;padding:9px 10px;background:#101b27;border:1px solid #304355;border-radius:6px;color:#edf4f8;transition:border-color .2s,box-shadow .2s,transform .2s}.editable:hover,.editable:focus{border-color:#2fa9e6;box-shadow:0 0 0 3px #2fa9e622,0 0 18px #2fa9e633;outline:0;transform:translateY(-1px)}.editable::placeholder{color:#8fa2b3}.cartridge-edit{min-width:94px}.observation-edit{min-width:140px}.status{font-weight:600}.status.green{color:#24c586}.status.yellow{color:#f2b84b}.status.red{color:#ef6670}.util-cell{min-width:92px}.util-value{display:block;margin-bottom:5px}.util-meter{height:7px;background:#263746;border-radius:6px;overflow:hidden;box-shadow:inset 0 1px 3px #0008}.util-meter i{display:block;height:100%;border-radius:6px;box-shadow:0 0 10px currentColor}.util-meter.green i{background:#24c586;color:#24c586}.util-meter.yellow i{background:#f2b84b;color:#f2b84b}.util-meter.red i{background:#ef6670;color:#ef6670}.row-actions{display:flex;gap:5px}.row-actions .btn{padding:7px 9px;transition:box-shadow .2s,transform .2s}.row-actions .btn:hover{box-shadow:0 0 14px #2fa9e666;transform:translateY(-1px)}.row-editing{outline:1px solid #2fa9e6;outline-offset:-1px;box-shadow:inset 0 0 24px #2fa9e60d}.grid tbody tr{transition:background .2s,box-shadow .2s}.grid tbody tr:hover{background:#19304766;box-shadow:inset 3px 0 #2fa9e6}.kpi,.panel{transition:border-color .2s,box-shadow .2s}.kpi:hover,.panel:hover{border-color:#376078;box-shadow:0 18px 45px #0008,0 0 20px #2fa9e61c}';
   document.head.append(style);
   const formatNumber = value => Number(value || 0).toLocaleString('es-CO', { maximumFractionDigits: 1 });
   const dateInputValue = date => {
@@ -103,11 +103,17 @@
     document.getElementById('upcoming').textContent = calculations.filter(entry => entry.calculation.daysRemaining <= 30 && entry.calculation.daysRemaining > 0).length;
     document.getElementById('expired').textContent = calculations.filter(entry => entry.calculation.daysRemaining === 0).length;
     document.getElementById('healthy').textContent = data.length + ' equipos en control';
+    const indicatorsPanel = [...document.querySelectorAll('.panel')].find(panel => panel.querySelector('h2')?.textContent.includes('Indicadores operativos'));
+    const equipmentIndicator = indicatorsPanel?.querySelector('.tech strong');
+    if (equipmentIndicator) equipmentIndicator.textContent = data.length;
     renderDonut(totalPercent);
     renderCharts(calculations);
   };
   const findItem = af => data.find(item => item.af === af);
   const persist = () => { localStorage.setItem(KEY, JSON.stringify(data)); toast(); };
+  if (!data.some(item => item.af === 'AF155714-10')) {
+    data.push({ af: 'AF155714-10', name: 'LAVADORA METODOZONE 5', date: dateInputValue(new Date()), operator: '', notes: '', point: 'Doble punto' });
+  }
   const updateDate = input => {
     const item = findItem(input.dataset.af);
     if (!item || !input.value) return;
