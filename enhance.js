@@ -631,12 +631,11 @@
     document.getElementById('healthy').textContent = data.length + ' equipos en control';
     const indicatorsPanel = [...document.querySelectorAll('.panel')].find(panel => panel.querySelector('h2')?.textContent.includes('Indicadores operativos'));
     const indicatorValues = indicatorsPanel?.querySelectorAll('.tech strong');
-    if (indicatorValues?.length >= 4) {
+    if (indicatorValues?.length >= 3) {
       indicatorValues[0].textContent = data.length;
       const totalCartridges = data.reduce((sum, item) => sum + cartridgeCountFor(item), 0);
       indicatorValues[1].textContent = totalCartridges;
-      indicatorValues[2].textContent = totalCartridges;
-      indicatorValues[3].textContent = formatNumber(totalCapacity) + ' ml';
+      indicatorValues[2].textContent = formatNumber(totalCapacity) + ' ml';
     }
     renderDonut(totalPercent, totalGrease, totalCapacity);
     renderCharts(calculations);
