@@ -24,7 +24,9 @@
     const remain = Math.max(0, capacityPerEquipment - grease);
     const percent = grease / capacityPerEquipment * 100;
     const daysRemaining = Math.max(0, Math.ceil(remain / dailyRate));
-    const changeDate = new Date(Date.now() + daysRemaining * dayMs);
+    const changeDate = new Date();
+    changeDate.setHours(12, 0, 0, 0);
+    changeDate.setDate(changeDate.getDate() + daysRemaining);
     return { grease, remain, percent, daysRemaining, changeDate };
   };
   const syncItem = item => { item.grease = Number(currentGrease(item).toFixed(2)); };
