@@ -522,6 +522,25 @@
     const day = String(date.getDate()).padStart(2, '0');
     return year + '-' + month + '-' + day;
   };
+  const normalizeDateValue = value => {
+    if (!value || typeof value !== 'string') return '';
+    const trimmed = value.trim();
+    if (!trimmed) return '';
+
+    const isoMatch = trimmed.match(/^\d{4}-\d{2}-\d{2}$/);
+    if (isoMatch) return trimmed;
+
+    const localeMatch = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if (!localeMatch) return trimmed;
+
+    let [, dayPart, monthPart, yearPart] = localeMatch;
+    let year = Number(yearPart);
+    if (yearPart.length === 2) year = year > 30 ? 1900 + year : 2000 + year;
+
+    const date = new Date(Number(year), Number(monthPart) - 1, Number(dayPart));
+    if (Number.isNaN(date.getTime())) return trimmed;
+    return dateInputValue(date);
+  };
   const parseDate = value => new Date(value + 'T00:00:00');
   const currentGrease = item => {
     const itemCapacity = capacityFor(item);
@@ -647,8 +666,10 @@
   }
   const updateDate = input => {
     const item = findItem(input.dataset.af);
-    if (!item || !input.value) return;
-    item.date = input.value;
+    if (!item) return;
+    const normalized = normalizeDateValue(input.value);
+    if (!normalized) return;
+    item.date = normalized;
     item.grease = Number(currentGrease({ date: item.date }).toFixed(2));
     item.cartridge1 = Number(Math.min(cartridgeCapacity, (capacityFor(item) - item.grease) / cartridgeCountFor(item)).toFixed(1));
     item.cartridge2 = item.cartridge1;
@@ -717,7 +738,7 @@
   const addButton = document.getElementById('add');
   const modal = document.createElement('div');
   modal.className = 'equipment-modal';
-  modal.innerHTML = '<div class="equipment-dialog" role="dialog" aria-modal="true" aria-labelledby="equipment-title"><header><h2 id="equipment-title">Agregar equipo</h2><p>Completa los datos del equipo. Puedes usar la fecha o las cantidades de grasa para calcular el resto.</p></header><form class="equipment-form"><label>Código AF<input name="af" required placeholder="AF000000-00"></label><label>Nombre del equipo<input name="name" required placeholder="Nombre del equipo"></label><label>Fecha de instalación<input name="date" type="date" required></label><label>Operador<input name="operator" placeholder="Operador"></label><label>Lubricador 1 (ml)<input name="cartridge1" type="number" min="0" max="125" step="0.1" placeholder="Opcional"></label><label>Lubricador 2 (ml)<input name="cartridge2" type="number" min="0" max="125" step="0.1" placeholder="Opcional"></label><label>Lubricador / punto<input name="point" value="Doble punto"></label><label class="wide">Observaciones<textarea name="observations" rows="3" placeholder="Añadir observaciones"></textarea><span class="help">Cada lubricador tiene una capacidad máxima de 125 ml.</span></label></form><footer><button type="button" class="btn cancel">Cancelar</button><button type="button" class="btn save">Guardar equipo</button></footer></div>';
+  modal.innerHTML = '<div class="equipment-dialog" role="dialog" aria-modal="true" aria-labelledby="equipment-title"><header><h2 id="equipment-title">Agregar equipo</h2><p>Completa los datos del equipo. Puedes usar la fecha o las cantidades de grasa para calcular el resto.</p></header><form class="equipment-form"><label>Código AF<input name="af" required placeholder="AF000000-00"></label><label>Nombre del equipo<input name="name" required placeholder="Nombre del equipo"></label><label>Fecha de instalación<input name="date" type="date" required placeholder="aaaa-mm-dd" lang="es-CO"></label><label>Operador<input name="operator" placeholder="Operador"></label><label>Lubricador 1 (ml)<input name="cartridge1" type="number" min="0" max="125" step="0.1" placeholder="Opcional"></label><label>Lubricador 2 (ml)<input name="cartridge2" type="number" min="0" max="125" step="0.1" placeholder="Opcional"></label><label>Lubricador / punto<input name="point" value="Doble punto"></label><label class="wide">Observaciones<textarea name="observations" rows="3" placeholder="Añadir observaciones"></textarea><span class="help">Cada lubricador tiene una capacidad máxima de 125 ml.</span></label></form><footer><button type="button" class="btn cancel">Cancelar</button><button type="button" class="btn save">Guardar equipo</button></footer></div>';
   document.body.append(modal);
   const form = modal.querySelector('form');
   const closeModal = () => modal.classList.remove('open');
@@ -726,13 +747,14 @@
   modal.querySelector('.save').addEventListener('click', () => {
     if (!form.reportValidity()) return;
     const values = Object.fromEntries(new FormData(form).entries());
+    const normalizedDate = normalizeDateValue(values.date);
     const hasQuantities = values.cartridge1 !== '' || values.cartridge2 !== '';
     const cartridge1 = hasQuantities ? Math.min(cartridgeCapacity, Math.max(0, Number(values.cartridge1) || 0)) : 0;
     const cartridge2 = hasQuantities ? Math.min(cartridgeCapacity, Math.max(0, Number(values.cartridge2) || 0)) : 0;
-    const dateBasedGrease = currentGrease({ date: values.date });
+    const dateBasedGrease = currentGrease({ date: normalizedDate || values.date });
     const grease = hasQuantities ? capacityPerEquipment - cartridge1 - cartridge2 : dateBasedGrease;
     const remaining = hasQuantities ? cartridge1 + cartridge2 : capacityPerEquipment - grease;
-    const item = { af: values.af.trim(), name: values.name.trim(), date: values.date, operator: values.operator, cartridge1: hasQuantities ? cartridge1 : Number((remaining / 2).toFixed(1)), cartridge2: hasQuantities ? cartridge2 : Number((remaining / 2).toFixed(1)), observations: values.observations, point: values.point || 'Doble punto', grease };
+    const item = { af: values.af.trim(), name: values.name.trim(), date: normalizedDate || values.date, operator: values.operator, cartridge1: hasQuantities ? cartridge1 : Number((remaining / 2).toFixed(1)), cartridge2: hasQuantities ? cartridge2 : Number((remaining / 2).toFixed(1)), observations: values.observations, point: values.point || 'Doble punto', grease };
     if (hasQuantities) item.date = dateInputValue(new Date(Date.now() - grease / dailyRate * dayMs));
     data.push(item); persist(); render(); form.reset(); closeModal();
   });
