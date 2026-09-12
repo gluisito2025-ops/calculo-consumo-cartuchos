@@ -1,5 +1,6 @@
 (function () {
   const dailyRate = 1.37;
+  const cartridgeCapacity = 125;
   const capacityPerEquipment = 250;
   const dayMs = 86400000;
   const rows = document.getElementById('rows');
@@ -35,8 +36,11 @@
   };
   const syncItem = item => {
     item.grease = Number(currentGrease(item).toFixed(2));
-    if (item.cartridge1 === undefined) item.cartridge1 = '';
-    if (item.cartridge2 === undefined) item.cartridge2 = '';
+    const remaining = Math.max(0, capacityPerEquipment - item.grease);
+    if (!Number.isFinite(Number(item.cartridge1)) || !Number.isFinite(Number(item.cartridge2))) {
+      item.cartridge1 = Number(Math.min(cartridgeCapacity, remaining / 2).toFixed(1));
+      item.cartridge2 = Number(Math.min(cartridgeCapacity, remaining / 2).toFixed(1));
+    }
     if (item.observations === undefined) item.observations = '';
   };
   const statusName = calculation => calculation.percent > 90 ? 'red' : calculation.percent > 70 ? 'yellow' : 'green';
@@ -58,7 +62,7 @@
   };
   const render = () => {
     data.forEach(syncItem);
-    if (tableHeader) tableHeader.innerHTML = '<th>Activo / AF</th><th>Instalación</th><th>Operador</th><th>Cartucho 1</th><th>Cartucho 2</th><th>Observaciones</th><th>Consumo</th><th>Utilización</th><th>Estado</th><th>Días restantes</th><th>Fecha cambio</th><th>Lubricador</th><th></th>';
+    if (tableHeader) tableHeader.innerHTML = '<th>Activo / AF</th><th>Instalación</th><th>Operador</th><th>Cartucho 1 (ml)</th><th>Cartucho 2 (ml)</th><th>Observaciones</th><th>Consumo</th><th>Utilización</th><th>Estado</th><th>Días restantes</th><th>Fecha cambio</th><th>Lubricador</th><th></th>';
     const query = (search?.value || '').toLowerCase();
     const calculations = data.map(item => ({ item, calculation: calculate(item) }));
     const visible = calculations.filter(entry => {
@@ -76,8 +80,8 @@
         '<td><strong>' + item.af + '</strong><br>' + item.name + '</td>' +
         '<td><input class="editable date-edit" data-af="' + item.af + '" type="date" value="' + item.date + '"></td>' +
         '<td><input class="editable operator-edit" data-af="' + item.af + '" value="' + (item.operator || '') + '" placeholder="Operador"></td>' +
-        '<td><input class="editable cartridge-edit cartridge1-edit" data-af="' + item.af + '" value="' + (item.cartridge1 || '') + '" placeholder="Cartucho 1"></td>' +
-        '<td><input class="editable cartridge-edit cartridge2-edit" data-af="' + item.af + '" value="' + (item.cartridge2 || '') + '" placeholder="Cartucho 2"></td>' +
+        '<td><input class="editable cartridge-edit cartridge1-edit" data-af="' + item.af + '" type="number" min="0" max="125" step="0.1" value="' + Number(item.cartridge1).toFixed(1) + '"></td>' +
+        '<td><input class="editable cartridge-edit cartridge2-edit" data-af="' + item.af + '" type="number" min="0" max="125" step="0.1" value="' + Number(item.cartridge2).toFixed(1) + '"></td>' +
         '<td><input class="editable observation-edit observations-edit" data-af="' + item.af + '" value="' + (item.observations || '') + '" placeholder="Añadir observación"></td>' +
         '<td><input class="editable grease-edit" data-af="' + item.af + '" type="number" min="0" max="250" step="0.1" value="' + calculation.grease.toFixed(1) + '"> ml</td>' +
         '<td>' + formatNumber(calculation.percent) + '%</td>' +
@@ -108,6 +112,8 @@
     if (!item || !input.value) return;
     item.date = input.value;
     item.grease = Number(currentGrease({ date: item.date }).toFixed(2));
+    item.cartridge1 = Number(Math.min(cartridgeCapacity, (capacityPerEquipment - item.grease) / 2).toFixed(1));
+    item.cartridge2 = item.cartridge1;
     persist();
     render();
   };
@@ -116,6 +122,18 @@
     if (!item) return;
     item.grease = Math.max(0, Math.min(capacityPerEquipment, Number(input.value) || 0));
     item.date = dateInputValue(new Date(Date.now() - item.grease / dailyRate * dayMs));
+    item.cartridge1 = Number(Math.min(cartridgeCapacity, (capacityPerEquipment - item.grease) / 2).toFixed(1));
+    item.cartridge2 = item.cartridge1;
+    persist();
+    render();
+  };
+  const updateCartridges = input => {
+    const item = findItem(input.dataset.af);
+    if (!item) return;
+    item[input.matches('.cartridge1-edit') ? 'cartridge1' : 'cartridge2'] = Math.max(0, Math.min(cartridgeCapacity, Number(input.value) || 0));
+    const remaining = Number(item.cartridge1 || 0) + Number(item.cartridge2 || 0);
+    item.grease = Math.max(0, Math.min(capacityPerEquipment, capacityPerEquipment - remaining));
+    item.date = dateInputValue(new Date(Date.now() - item.grease / dailyRate * dayMs));
     persist();
     render();
   };
@@ -123,6 +141,7 @@
     const input = event.target;
     if (input.matches('.date-edit')) updateDate(input);
     if (input.matches('.grease-edit')) updateGrease(input);
+    if (input.matches('.cartridge1-edit, .cartridge2-edit')) updateCartridges(input);
     if (input.matches('.operator-edit, .cartridge1-edit, .cartridge2-edit, .observations-edit, .point-edit')) {
       const item = findItem(input.dataset.af);
       if (item) {
