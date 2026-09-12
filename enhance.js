@@ -104,8 +104,13 @@
     document.getElementById('expired').textContent = calculations.filter(entry => entry.calculation.daysRemaining === 0).length;
     document.getElementById('healthy').textContent = data.length + ' equipos en control';
     const indicatorsPanel = [...document.querySelectorAll('.panel')].find(panel => panel.querySelector('h2')?.textContent.includes('Indicadores operativos'));
-    const equipmentIndicator = indicatorsPanel?.querySelector('.tech strong');
-    if (equipmentIndicator) equipmentIndicator.textContent = data.length;
+    const indicatorValues = indicatorsPanel?.querySelectorAll('.tech strong');
+    if (indicatorValues?.length >= 4) {
+      indicatorValues[0].textContent = data.length;
+      indicatorValues[1].textContent = data.length * 2;
+      indicatorValues[2].textContent = data.length * 2;
+      indicatorValues[3].textContent = formatNumber(totalCapacity) + ' ml';
+    }
     renderDonut(totalPercent);
     renderCharts(calculations);
   };
