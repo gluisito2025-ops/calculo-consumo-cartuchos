@@ -616,7 +616,7 @@
     const highest = Math.max(1, ...calculations.map(entry => entry.calculation.grease));
     bars.innerHTML = calculations.slice().sort((a, b) => b.calculation.grease - a.calculation.grease).slice(0, 10).map(entry => {
       const width = entry.calculation.grease / highest * 100;
-      return '<div class="bar-row"><div class="bar-label"><span>' + entry.item.af + '</span><span>' + formatNumber(entry.calculation.grease) + ' ml</span></div><div class="bar-track"><div class="bar-fill" style="width:' + width + '%"></div></div></div>';
+      return '<div class="bar-row"><div class="bar-label"><span>' + entry.item.name + '</span><span>' + formatNumber(entry.calculation.grease) + ' ml</span></div><div class="bar-track"><div class="bar-fill" style="width:' + width + '%"></div></div></div>';
     }).join('');
   };
   const render = () => {
@@ -769,6 +769,16 @@
     render();
   });
   [search, state, dateFilter].forEach(control => control?.addEventListener('input', render));
+  const navButtons = [...document.querySelectorAll('.nav button[data-view]')];
+  const viewTargets = {
+    dashboard: document.querySelector('.main'),
+    assets: document.querySelector('.grid')?.closest('.panel'),
+    analytics: document.getElementById('bars')?.closest('.panel')
+  };
+  navButtons.forEach(button => button.addEventListener('click', () => {
+    navButtons.forEach(item => item.classList.toggle('active', item === button));
+    viewTargets[button.dataset.view]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
   const tableWrap = document.querySelector('.table-wrap');
   if (tableWrap) tableWrap.style.maxHeight = '380px';
   const addButton = document.getElementById('add');
