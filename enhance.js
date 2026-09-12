@@ -9,6 +9,10 @@
     'AF123199-10', 'AF149767-10'
   ]);
   const INVALID_AF_SET = new Set(['AF155714-10', 'AF155715-10']);
+  const EQUIPMENT_NAME_MAP = new Map([
+    ['AF123199-10', 'LAVADORA TONELLO G1 70 LD1 - 1'],
+    ['AF149767-10', 'LAVADORA TONELLO G1 70 LD1 - 2']
+  ]);
   const cartridgeCountFor = item => item.af === 'AF076158-10' ? 3 : 2;
   const capacityFor = item => cartridgeCountFor(item) * cartridgeCapacity;
   const dayMs = 86400000;
@@ -679,7 +683,7 @@
     validItems.forEach(item => byAf.set(item.af, { ...item, name: item.name || item.af }));
     const seeded = [...VALID_AF_SET].filter(af => !byAf.has(af)).map(af => ({
       af,
-      name: `${af.startsWith('AF155') ? 'LAVADORA METODOZONE' : 'LAVADORA TONELLO'} ${af.replace(/AF|-/g, '').slice(-2) || '1'}`,
+      name: EQUIPMENT_NAME_MAP.get(af) || `${af.startsWith('AF155') ? 'LAVADORA METODOZONE' : 'LAVADORA TONELLO'} ${af.replace(/AF|-/g, '').slice(-2) || '1'}`,
       date: dateInputValue(new Date(Date.now() - ((Math.random() * 120) | 0) * dayMs)),
       operator: '',
       notes: '',
