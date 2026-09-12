@@ -20,4 +20,4 @@
   $('csv')?.addEventListener('click',()=>{const csv=['AF,Equipo,Fecha,Consumo,Porcentaje'].concat(data.map(item=>{const c=calc(item);return [item.af,item.name,item.date,fmt(c.used),fmt(c.pct)].join(',')})).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='consumo-skf.csv';a.click()});
   const tick=()=>{const now=new Date();$('time').textContent=now.toLocaleTimeString('es-CO');$('today').textContent=now.toLocaleDateString('es-CO',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})};tick();setInterval(tick,1000);
 })();
-</script><script src="enhance.js?v=278d415"></script></body></html>
+</script><script src="enhance.js?v=2713c2d"></script></body></html>
