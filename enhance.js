@@ -3,11 +3,11 @@
   const cartridgeCapacity = 125;
   const capacityPerEquipment = 250;
   const VALID_AF_SET = new Set([
-    'AF155709-10', 'AF155710-10', 'AF155711-10', 'AF155713-10', 'AF155715-10',
+    'AF155709-10', 'AF155710-10', 'AF155711-10', 'AF155713-10',
     'AF076158-10', 'AF095702-10', 'AF095701-10', 'AF128334-10', 'AF128335-10', 'AF130947-10',
     'AF130946-10', 'AF145965-10', 'AF145963-10', 'AF145964-10', 'AF002751-48', 'AF149273-10', 'AF149272-10'
   ]);
-  const INVALID_AF_SET = new Set(['AF155714-10']);
+  const INVALID_AF_SET = new Set(['AF155714-10', 'AF155715-10']);
   const cartridgeCountFor = item => item.af === 'AF076158-10' ? 3 : 2;
   const capacityFor = item => cartridgeCountFor(item) * cartridgeCapacity;
   const dayMs = 86400000;
