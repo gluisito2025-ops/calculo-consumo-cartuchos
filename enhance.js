@@ -661,6 +661,7 @@
     }
     renderDonut(totalPercent, totalGrease, totalCapacity);
     renderCharts(calculations);
+    maybeAutoSendWhatsappAlert();
   };
   const findItem = af => data.find(item => item.af === af);
   const persist = () => { localStorage.setItem(KEY, JSON.stringify(data)); toast(); };
@@ -740,6 +741,7 @@
   if (tableWrap) tableWrap.style.maxHeight = '380px';
   const addButton = document.getElementById('add');
   const whatsappButton = document.getElementById('whatsapp');
+  const AUTO_ALERT_KEY = 'skf-system24-whatsapp-alert-last';
   const buildWhatsappMessage = () => {
     const alerts = data
       .map(item => ({ item, calculation: calculate(item) }))
@@ -755,10 +757,29 @@
 
     return 'ALERTA SKF SYSTEM 24\n\nEquipos con 50 días o menos de grasa restante:\n' + lines;
   };
-  const sendWhatsappAlert = () => {
+  const sendWhatsappAlert = (silent = false) => {
     const message = buildWhatsappMessage();
     const url = 'https://wa.me/?text=' + encodeURIComponent(message);
     window.open(url, '_blank', 'noopener');
+    if (!silent) {
+      toast();
+    }
+  };
+  const maybeAutoSendWhatsappAlert = () => {
+    const alerts = data
+      .map(item => ({ item, calculation: calculate(item) }))
+      .filter(entry => entry.calculation.daysRemaining <= 50);
+
+    if (!alerts.length) return;
+
+    const now = Date.now();
+    const lastSent = Number(localStorage.getItem(AUTO_ALERT_KEY) || '0');
+    const twelveHoursMs = 12 * 60 * 60 * 1000;
+
+    if (now - lastSent < twelveHoursMs) return;
+
+    localStorage.setItem(AUTO_ALERT_KEY, String(now));
+    sendWhatsappAlert(true);
   };
   const modal = document.createElement('div');
   modal.className = 'equipment-modal';
