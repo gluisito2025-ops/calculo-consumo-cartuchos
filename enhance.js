@@ -184,6 +184,25 @@
   [search, state, dateFilter].forEach(control => control?.addEventListener('input', render));
   const tableWrap = document.querySelector('.table-wrap');
   if (tableWrap) tableWrap.style.maxHeight = '460px';
+  const imageInput = document.getElementById('imageInput');
+  const productImage = document.getElementById('productImage');
+  const imageHero = document.getElementById('hero');
+  const showProductImage = imageData => {
+    if (!imageData || !productImage || !imageHero) return;
+    productImage.src = imageData;
+    imageHero.classList.add('has-image');
+  };
+  showProductImage(localStorage.getItem('skf-image'));
+  imageInput?.addEventListener('change', event => {
+    const file = event.target.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      showProductImage(reader.result);
+      localStorage.setItem('skf-image', reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
   data.forEach(syncItem);
   render();
   setInterval(render, 60000);
