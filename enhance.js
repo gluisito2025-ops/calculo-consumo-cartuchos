@@ -739,6 +739,27 @@
   const tableWrap = document.querySelector('.table-wrap');
   if (tableWrap) tableWrap.style.maxHeight = '380px';
   const addButton = document.getElementById('add');
+  const whatsappButton = document.getElementById('whatsapp');
+  const buildWhatsappMessage = () => {
+    const alerts = data
+      .map(item => ({ item, calculation: calculate(item) }))
+      .filter(entry => entry.calculation.daysRemaining <= 50)
+      .sort((a, b) => a.calculation.daysRemaining - b.calculation.daysRemaining);
+
+    const lines = alerts.length
+      ? alerts.map(entry => {
+          const { item, calculation } = entry;
+          return `- ${item.af} | ${item.name} | ${calculation.daysRemaining} días restantes`;
+        }).join('\n')
+      : 'No hay equipos con 50 días o menos de grasa restante.';
+
+    return 'ALERTA SKF SYSTEM 24\n\nEquipos con 50 días o menos de grasa restante:\n' + lines;
+  };
+  const sendWhatsappAlert = () => {
+    const message = buildWhatsappMessage();
+    const url = 'https://wa.me/?text=' + encodeURIComponent(message);
+    window.open(url, '_blank', 'noopener');
+  };
   const modal = document.createElement('div');
   modal.className = 'equipment-modal';
   modal.innerHTML = '<div class="equipment-dialog" role="dialog" aria-modal="true" aria-labelledby="equipment-title"><header><h2 id="equipment-title">Agregar equipo</h2><p>Completa los datos del equipo. Puedes usar la fecha o las cantidades de grasa para calcular el resto.</p></header><form class="equipment-form"><label>Código AF<input name="af" required placeholder="AF000000-00"></label><label>Nombre del equipo<input name="name" required placeholder="Nombre del equipo"></label><label>Fecha de instalación<input name="date" type="text" inputmode="numeric" pattern="\\d{4}-\\d{2}-\\d{2}" required placeholder="aaaa-mm-dd" lang="es-CO"></label><label>Operador<input name="operator" placeholder="Operador"></label><label>Lubricador 1 (ml)<input name="cartridge1" type="number" min="0" max="125" step="0.1" placeholder="Opcional"></label><label>Lubricador 2 (ml)<input name="cartridge2" type="number" min="0" max="125" step="0.1" placeholder="Opcional"></label><label>Lubricador / punto<input name="point" value="Doble punto"></label><label class="wide">Observaciones<textarea name="observations" rows="3" placeholder="Añadir observaciones"></textarea><span class="help">Cada lubricador tiene una capacidad máxima de 125 ml.</span></label></form><footer><button type="button" class="btn cancel">Cancelar</button><button type="button" class="btn save">Guardar equipo</button></footer></div>';
@@ -768,6 +789,9 @@
     modal.classList.add('open');
     form.af.focus();
   }, true);
+  whatsappButton?.addEventListener('click', () => {
+    sendWhatsappAlert();
+  });
   const ensureImageSection = () => {
     let imageHero = document.getElementById('hero');
     let imageInput = document.getElementById('imageInput');
