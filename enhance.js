@@ -6,6 +6,10 @@
   const search = document.getElementById('search');
   const state = document.getElementById('state');
   const dateFilter = document.getElementById('dateFilter');
+  const tableHeader = document.querySelector('.grid thead tr');
+  const style = document.createElement('style');
+  style.textContent = '.grid th{white-space:nowrap}.editable{width:100%;min-width:116px;padding:9px 10px;background:#101b27;border:1px solid #304355;border-radius:6px;color:#edf4f8}.editable::placeholder{color:#8fa2b3}.cartridge-edit{min-width:94px}.observation-edit{min-width:140px}';
+  document.head.append(style);
   const formatNumber = value => Number(value || 0).toLocaleString('es-CO', { maximumFractionDigits: 1 });
   const dateInputValue = date => {
     const year = date.getFullYear();
@@ -29,7 +33,12 @@
     changeDate.setDate(changeDate.getDate() + daysRemaining);
     return { grease, remain, percent, daysRemaining, changeDate };
   };
-  const syncItem = item => { item.grease = Number(currentGrease(item).toFixed(2)); };
+  const syncItem = item => {
+    item.grease = Number(currentGrease(item).toFixed(2));
+    if (item.cartridge1 === undefined) item.cartridge1 = '';
+    if (item.cartridge2 === undefined) item.cartridge2 = '';
+    if (item.observations === undefined) item.observations = '';
+  };
   const statusName = calculation => calculation.percent > 90 ? 'red' : calculation.percent > 70 ? 'yellow' : 'green';
   const statusLabel = { green: 'Normal', yellow: 'Próximo cambio', red: 'Vencido' };
   const renderDonut = percent => {
@@ -49,6 +58,7 @@
   };
   const render = () => {
     data.forEach(syncItem);
+    if (tableHeader) tableHeader.innerHTML = '<th>Activo / AF</th><th>Instalación</th><th>Operador</th><th>Cartucho 1</th><th>Cartucho 2</th><th>Observaciones</th><th>Consumo</th><th>Utilización</th><th>Estado</th><th>Días restantes</th><th>Fecha cambio</th><th>Lubricador</th><th></th>';
     const query = (search?.value || '').toLowerCase();
     const calculations = data.map(item => ({ item, calculation: calculate(item) }));
     const visible = calculations.filter(entry => {
@@ -66,6 +76,9 @@
         '<td><strong>' + item.af + '</strong><br>' + item.name + '</td>' +
         '<td><input class="editable date-edit" data-af="' + item.af + '" type="date" value="' + item.date + '"></td>' +
         '<td><input class="editable operator-edit" data-af="' + item.af + '" value="' + (item.operator || '') + '" placeholder="Operador"></td>' +
+        '<td><input class="editable cartridge-edit cartridge1-edit" data-af="' + item.af + '" value="' + (item.cartridge1 || '') + '" placeholder="Cartucho 1"></td>' +
+        '<td><input class="editable cartridge-edit cartridge2-edit" data-af="' + item.af + '" value="' + (item.cartridge2 || '') + '" placeholder="Cartucho 2"></td>' +
+        '<td><input class="editable observation-edit observations-edit" data-af="' + item.af + '" value="' + (item.observations || '') + '" placeholder="Añadir observación"></td>' +
         '<td><input class="editable grease-edit" data-af="' + item.af + '" type="number" min="0" max="250" step="0.1" value="' + calculation.grease.toFixed(1) + '"> ml</td>' +
         '<td>' + formatNumber(calculation.percent) + '%</td>' +
         '<td><span class="status ' + currentStatus + '"><i class="dot"></i>' + statusLabel[currentStatus] + '</span></td>' +
@@ -110,9 +123,16 @@
     const input = event.target;
     if (input.matches('.date-edit')) updateDate(input);
     if (input.matches('.grease-edit')) updateGrease(input);
-    if (input.matches('.operator-edit, .point-edit')) {
+    if (input.matches('.operator-edit, .cartridge1-edit, .cartridge2-edit, .observations-edit, .point-edit')) {
       const item = findItem(input.dataset.af);
-      if (item) { item.operator = input.value; item.point = input.matches('.point-edit') ? input.value : item.point; persist(); }
+      if (item) {
+        if (input.matches('.operator-edit')) item.operator = input.value;
+        if (input.matches('.cartridge1-edit')) item.cartridge1 = input.value;
+        if (input.matches('.cartridge2-edit')) item.cartridge2 = input.value;
+        if (input.matches('.observations-edit')) item.observations = input.value;
+        if (input.matches('.point-edit')) item.point = input.value;
+        persist();
+      }
     }
   });
   rows.addEventListener('click', event => {
