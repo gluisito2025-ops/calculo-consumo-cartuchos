@@ -11,7 +11,7 @@
   const dateFilter = document.getElementById('dateFilter');
   const tableHeader = document.querySelector('.grid thead tr');
   const style = document.createElement('style');
-  style.textContent = '.grid th{white-space:nowrap}.editable{width:100%;min-width:116px;padding:9px 10px;background:#101b27;border:1px solid #304355;border-radius:6px;color:#edf4f8;transition:border-color .2s,box-shadow .2s,transform .2s}.editable:hover,.editable:focus{border-color:#2fa9e6;box-shadow:0 0 0 3px #2fa9e622,0 0 18px #2fa9e633;outline:0;transform:translateY(-1px)}.editable::placeholder{color:#8fa2b3}.cartridge-edit{min-width:94px}.observation-edit{min-width:140px}.muted{color:#64788a;font-size:11px}.status{font-weight:600}.status.green{color:#24c586}.status.yellow{color:#f2b84b}.status.red{color:#ef6670}.util-cell{min-width:92px}.util-value{display:block;margin-bottom:5px}.util-meter{height:7px;background:#263746;border-radius:6px;overflow:hidden;box-shadow:inset 0 1px 3px #0008}.util-meter i{display:block;height:100%;border-radius:6px;box-shadow:0 0 10px currentColor}.util-meter.green i{background:#24c586;color:#24c586}.util-meter.yellow i{background:#f2b84b;color:#f2b84b}.util-meter.red i{background:#ef6670;color:#ef6670}.row-actions{display:flex;gap:5px}.row-actions .btn{padding:7px 9px;transition:box-shadow .2s,transform .2s}.row-actions .btn:hover{box-shadow:0 0 14px #2fa9e666;transform:translateY(-1px)}.row-editing{outline:1px solid #2fa9e6;outline-offset:-1px;box-shadow:inset 0 0 24px #2fa9e60d}.grid tbody tr{transition:background .2s,box-shadow .2s}.grid tbody tr:hover{background:#19304766;box-shadow:inset 3px 0 #2fa9e6}.kpi,.panel{transition:border-color .2s,box-shadow .2s}.kpi:hover,.panel:hover{border-color:#376078;box-shadow:0 18px 45px #0008,0 0 20px #2fa9e61c}.hero{display:flex!important;align-items:center;justify-content:center}.hero img{object-fit:contain;object-position:center center}.hero.has-image .upload{display:none!important}.equipment-modal{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;padding:20px;background:#02080dcc;backdrop-filter:blur(8px)}.equipment-modal.open{display:flex}.equipment-dialog{width:min(680px,100%);max-height:90vh;overflow:auto;background:#111d29;border:1px solid #3d6178;border-radius:16px;box-shadow:0 24px 80px #000b,0 0 32px #2fa9e633}.equipment-dialog header{padding:20px 24px;border-bottom:1px solid #304355}.equipment-dialog h2{margin:0;color:#edf4f8;font-size:20px}.equipment-dialog header p{margin:6px 0 0;color:#8fa2b3;font-size:12px}.equipment-form{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:22px 24px}.equipment-form label{display:grid;gap:6px;color:#9eb2c2;font-size:12px}.equipment-form input,.equipment-form textarea{width:100%;padding:10px 11px;background:#0c1722;border:1px solid #304b5e;border-radius:7px;color:#edf4f8;font:inherit}.equipment-form input:focus,.equipment-form textarea:focus{outline:0;border-color:#2fa9e6;box-shadow:0 0 0 3px #2fa9e622}.equipment-form .wide{grid-column:1/-1}.equipment-form .help{color:#6f8798;font-size:11px}.equipment-dialog footer{display:flex;justify-content:flex-end;gap:9px;padding:16px 24px;border-top:1px solid #304355}.equipment-dialog .cancel{background:#243746}.equipment-dialog .save{background:#0875bd}@media(max-width:640px){.equipment-form{grid-template-columns:1fr}.equipment-form .wide{grid-column:auto}}';
+  style.textContent += '.donut-info{position:fixed;z-index:30;pointer-events:none;display:none;padding:9px 12px;background:#0d1a26ee;border:1px solid #3d6178;border-radius:7px;color:#edf4f8;font-size:12px;box-shadow:0 8px 24px #0009}.donut-info strong{color:#2fa9e6}';
   document.head.append(style);
   const formatNumber = value => Number(value || 0).toLocaleString('es-CO', { maximumFractionDigits: 1 });
   const dateInputValue = date => {
@@ -51,11 +51,29 @@
   };
   const statusName = calculation => calculation.percent > 90 ? 'red' : calculation.percent > 70 ? 'yellow' : 'green';
   const statusLabel = { green: 'Normal', yellow: 'Próximo cambio', red: 'Vencido' };
-  const renderDonut = percent => {
+  const renderDonut = (percent, used, capacity) => {
     const donut = document.getElementById('donut');
     const donutText = document.getElementById('donutText');
     if (donut) donut.setAttribute('stroke-dasharray', Math.min(333, percent / 100 * 333) + ' 333');
     if (donutText) donutText.textContent = formatNumber(percent) + '%';
+    const chart = donut?.closest('svg');
+    if (!chart) return;
+    const available = Math.max(0, capacity - used);
+    const darkArc = [...chart.querySelectorAll('circle')].find(circle => circle !== donut);
+    const info = document.querySelector('.donut-info') || document.body.appendChild(Object.assign(document.createElement('div'), { className: 'donut-info' }));
+    const showInfo = (event, label, value, color) => { info.innerHTML = label + ': <strong style="color:' + color + '">' + formatNumber(value) + ' ml</strong>'; info.style.left = Math.min(window.innerWidth - 190, event.clientX + 12) + 'px'; info.style.top = Math.max(8, event.clientY - 42) + 'px'; info.style.display = 'block'; };
+    const hideInfo = () => { info.style.display = 'none'; };
+    if (!donut.dataset.interactive) {
+      donut.dataset.interactive = 'true';
+      donut.addEventListener('pointermove', event => showInfo(event, 'Consumido', Number(donut.dataset.used), '#2fa9e6'));
+      donut.addEventListener('pointerenter', event => showInfo(event, 'Consumido', Number(donut.dataset.used), '#2fa9e6'));
+      donut.addEventListener('pointerleave', hideInfo);
+      darkArc?.addEventListener('pointermove', event => showInfo(event, 'Disponible', Number(darkArc.dataset.available), '#8fa2b3'));
+      darkArc?.addEventListener('pointerenter', event => showInfo(event, 'Disponible', Number(darkArc.dataset.available), '#8fa2b3'));
+      darkArc?.addEventListener('pointerleave', hideInfo);
+    }
+    donut.dataset.used = used;
+    if (darkArc) darkArc.dataset.available = available;
   };
   const renderCharts = calculations => {
     const bars = document.getElementById('bars');
@@ -118,7 +136,7 @@
       indicatorValues[2].textContent = totalCartridges;
       indicatorValues[3].textContent = formatNumber(totalCapacity) + ' ml';
     }
-    renderDonut(totalPercent);
+    renderDonut(totalPercent, totalGrease, totalCapacity);
     renderCharts(calculations);
   };
   const findItem = af => data.find(item => item.af === af);
