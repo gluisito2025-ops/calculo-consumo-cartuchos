@@ -742,6 +742,7 @@
   const addButton = document.getElementById('add');
   const whatsappButton = document.getElementById('whatsapp');
   const AUTO_ALERT_KEY = 'skf-system24-whatsapp-alert-last';
+  const WHATSAPP_NUMBER = '573001234567';
   const buildWhatsappMessage = () => {
     const alerts = data
       .map(item => ({ item, calculation: calculate(item) }))
@@ -759,7 +760,7 @@
   };
   const sendWhatsappAlert = (silent = false) => {
     const message = buildWhatsappMessage();
-    const url = 'https://wa.me/?text=' + encodeURIComponent(message);
+    const url = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(message);
     window.open(url, '_blank', 'noopener');
     if (!silent) {
       toast();
