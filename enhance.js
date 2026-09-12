@@ -742,7 +742,7 @@
   const addButton = document.getElementById('add');
   const whatsappButton = document.getElementById('whatsapp');
   const AUTO_ALERT_KEY = 'skf-system24-whatsapp-alert-last';
-  const WHATSAPP_NUMBER = '573001234567';
+  const WHATSAPP_NUMBER = '573151787639';
   const buildWhatsappMessage = () => {
     const alerts = data
       .map(item => ({ item, calculation: calculate(item) }))
