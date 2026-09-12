@@ -103,14 +103,17 @@
 
     .panel {
       border-radius: 18px;
-      overflow: hidden;
+      overflow: visible;
       background: linear-gradient(180deg, rgba(15, 27, 36, 0.96), rgba(12, 19, 28, 0.96));
     }
 
     .panel-head {
+      position: relative;
+      z-index: 2;
       background: linear-gradient(180deg, rgba(24, 42, 59, 0.78), rgba(17, 27, 37, 0.8));
       border-bottom: 1px solid var(--line-soft);
       padding: 16px 18px;
+      overflow: visible;
     }
 
     .tools .btn,
