@@ -675,7 +675,7 @@
     maybeAutoSendWhatsappAlert();
   };
   const findItem = af => data.find(item => item.af === af);
-  const persist = () => { localStorage.setItem(KEY, JSON.stringify(data)); toast(); };
+  const API='/api/state'; let remoteReady=false, syncTimer; const pushRemote=async()=>{if(!remoteReady)return;try{await fetch(API,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({equipment:data})})}catch(error){console.warn('No se pudo sincronizar el estado compartido:',error)}}; const scheduleRemote=()=>{clearTimeout(syncTimer);syncTimer=setTimeout(pushRemote,300)}; const persist = () => { localStorage.setItem(KEY, JSON.stringify(data)); toast(); scheduleRemote(); };
   const sanitizeData = items => {
     if (!Array.isArray(items)) return [];
     const validItems = items.filter(item => item && typeof item === 'object' && item.af && !INVALID_AF_SET.has(item.af) && VALID_AF_SET.has(item.af));
@@ -700,7 +700,7 @@
   if (data.length !== sanitizeData(JSON.parse(localStorage.getItem(KEY) || 'null') || []).length) {
     localStorage.setItem(KEY, JSON.stringify(data));
   }
-  const updateDate = input => {
+  const loadRemote=async()=>{try{const response=await fetch(API,{cache:'no-store'});if(!response.ok)throw new Error('HTTP '+response.status);const payload=await response.json();const remote=sanitizeData(payload.equipment);if(remote.length){data=remote;localStorage.setItem(KEY,JSON.stringify(data))}remoteReady=true;await pushRemote();render();const foot=document.querySelector('.side-foot');if(foot)foot.innerHTML='BOGOTA<br>Lavanderia Industrial<br><br><span class="good">Sistema operativo</span><br>Sincronizacion remota activa'}catch(error){console.warn('Se usara la copia local temporalmente:',error)}}; loadRemote(); const updateDate = input => {
     const item = findItem(input.dataset.af);
     if (!item) return;
     const normalized = normalizeDateValue(input.value);
